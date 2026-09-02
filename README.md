@@ -7,6 +7,8 @@ every armory-supported flavor: Classic Era, Anniversary, Classic Progression and
 
 - "Armory Link" entry on every player right-click menu: unit frames, party and raid frames, chat names, friends list, guild roster, battleground scoreboard
 - Pre-selected link in a native dialog, so CMD+C (macOS) or CTRL+C (Windows) copies and closes it in one keypress
+- Dialog built from the same panel conventions as QuestieGuide, ChatScan and GatherMate2NodeAlert: dialog-box banner, boxed section, labeled groups, 4px spacing grid, nothing below 12px
+- Character name at 16px and realm at 14px, both white and properly capitalized, so the target reads at a glance
 - Zero configuration: realm, region, locale and game version all come from the running client
 - Realm slugs handle camel-case realms like `HydraxianWaterlords` and apostrophes like `Rhok'delar`
 
@@ -20,6 +22,8 @@ every armory-supported flavor: Classic Era, Anniversary, Classic Progression and
 ## Usage
 
 - Right-click a player portrait, name or roster row, then pick **Armory Link**.
+- The dialog shows the character and realm on top, the link below. The copy hint reads
+  CMD+C on a macOS client and CTRL+C elsewhere, resolved at runtime via `IsMacClient()`.
 - The link is already selected. Press CMD+C or CTRL+C to copy it, the dialog closes itself.
 - Nothing to configure and nothing saved. Everything in the URL is read from the client, and
   you only ever right-click players who are on your realm and your game version.
