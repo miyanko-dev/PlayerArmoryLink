@@ -9,7 +9,6 @@ every armory-supported flavor: Classic Era, Anniversary, Classic Progression and
 - Pre-selected link in a native dialog, so CMD+C (macOS) or CTRL+C (Windows) copies and closes it in one keypress
 - Game version auto-detected from the running client, switchable from the dropdown and remembered
 - Realm and region slugs built from the live client, including camel-case realms like `HydraxianWaterlords`
-- `/armory` and `/pal` slash commands for characters you cannot right-click
 
 ## Installation
 
@@ -22,8 +21,6 @@ every armory-supported flavor: Classic Era, Anniversary, Classic Progression and
 
 - Right-click a player portrait, name or roster row, then pick **Armory Link**.
 - The link is already selected. Press CMD+C or CTRL+C to copy it, the dialog closes itself.
-- `/armory` opens the link for your own character.
-- `/armory Wowbow` uses your realm, `/armory Wowbow-Soulseeker` uses the realm you name.
 - The dropdown in the bottom-right switches game version. The choice is stored in
   `PlayerArmoryLinkDB` per account.
 
