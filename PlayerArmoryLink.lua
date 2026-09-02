@@ -27,8 +27,13 @@ local GAME_VERSIONS = {
     {slug = "worldsoul", label = "Retail"},
 }
 
--- Anniversary realms run the era client under a Fresh season, permanent era realms do not.
-local FRESH_SEASONS = {[11] = true, [12] = true}
+-- Keyed by WOW_PROJECT_ID, whose constants are not all defined on every client.
+local PROJECT_VERSIONS = {
+    [1] = "worldsoul", -- Mainline
+    [2] = "classic1x", -- Classic, the permanent and fresh era realms
+    [5] = "classicann", -- Burning Crusade Classic, the Anniversary realms
+    [19] = "classic", -- Mists Classic, the progression realms
+}
 
 local UNIT_MENU_TAGS = {
     "MENU_UNIT_SELF",
@@ -55,17 +60,7 @@ local UNIT_MENU_TAGS = {
 local popup
 
 local function defaultVersion()
-    if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
-        return "worldsoul"
-    end
-    if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
-        return "classic"
-    end
-    local season = C_Seasons and C_Seasons.HasActiveSeason() and C_Seasons.GetActiveSeason()
-    if season and FRESH_SEASONS[season] then
-        return "classicann"
-    end
-    return "classic1x"
+    return PROJECT_VERSIONS[WOW_PROJECT_ID] or "classic"
 end
 
 local function selectedVersion()

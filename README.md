@@ -37,13 +37,26 @@ https://worldofwarcraft.blizzard.com/<locale>/<version>/<region>/armory/characte
 | Classic Progression | `classic` |
 | Retail | `worldsoul` |
 
-Version detection: Retail reports `WOW_PROJECT_MAINLINE`, the vanilla client reports
-`WOW_PROJECT_CLASSIC` and is split by `C_Seasons.GetActiveSeason()` (Fresh seasons 11 and 12
-are Anniversary realms, everything else is Classic Era), and every other project ID falls back
-to Classic Progression.
+Version detection reads `WOW_PROJECT_ID`, so the running client picks its own segment:
+
+| `WOW_PROJECT_ID` | Client | Segment |
+| --- | --- | --- |
+| 1 | Mainline 12.1.0 | `worldsoul` |
+| 2 | Classic Era 1.15.9 | `classic1x` |
+| 5 | Anniversary 2.5.6 | `classicann` |
+| 19 | Classic Progression 5.5.4 | `classic` |
+
+The Anniversary realms progress through expansions, so their project ID moves with them.
+When that happens the dropdown still reaches the right armory, and the default can be
+corrected in one line.
 
 ## Notes
 
 The addon adds a menu entry rather than replacing the portrait right-click, so the native
 menu keeps working. Blizzard's own menu system (`Menu.ModifyMenu`) is used, so no dropdown
 is tainted and combat is unaffected.
+
+Every API and template it touches (`Menu.ModifyMenu`, the `MENU_UNIT_*` tags,
+`DialogBorderTemplate`, `InputBoxTemplate`, `WowStyle1DropdownTemplate`, `UIPanelCloseButton`,
+`IsMetaKeyDown`, `UISpecialFrames`) is present on all four clients, and the registered unit
+menu names are identical across them.
