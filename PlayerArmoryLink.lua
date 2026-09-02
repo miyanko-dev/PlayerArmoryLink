@@ -62,9 +62,8 @@ local LAYOUT = {
     FRAME_W = 480,
     PAD_TOP = 48,
     SECTION_PAD = 12,
-    LABEL_H = 12, -- one GameFontNormal label line.
-    NAME_H = 16, -- GameFontHighlightLarge character name line.
-    REALM_H = 14, -- GameFontHighlightMedium realm line.
+    LABEL_H = 12, -- one GameFontNormal help line.
+    VALUE_H = 16, -- GameFontHighlightLarge name and realm lines.
     EDIT_H = 20, -- link edit box.
 }
 
@@ -201,25 +200,6 @@ local function buildSection(parent, labelText)
     return section
 end
 
--- Plain labeled group, GameFontNormal instead of the reference's 10px GameFontNormalSmall to keep every line at 12px or more.
-local function buildGroup(parent, labelText)
-    local group = CreateFrame("Frame", nil, parent)
-    local label = group:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    label:SetPoint("TOPLEFT", group, "TOPLEFT", 0, 0)
-    label:SetText(labelText)
-    group.label = label
-    local body = CreateFrame("Frame", nil, group)
-    body:SetPoint("TOPLEFT", group, "TOPLEFT", 0, -(LAYOUT.LABEL_H + SPACING.XS))
-    body:SetPoint("BOTTOMRIGHT", group, "BOTTOMRIGHT", 0, 0)
-    group.body = body
-    return group
-end
-
--- Sizes a group to its label row plus the given body height so layout math can trust GetHeight.
-local function sizeGroup(group, bodyHeight)
-    group:SetHeight(LAYOUT.LABEL_H + SPACING.XS + bodyHeight)
-end
-
 local function createPopup()
     local frame = CreateFrame("Frame", "PlayerArmoryLinkFrame", UIParent, "BackdropTemplate")
     frame:SetFrameStrata("DIALOG")
@@ -243,53 +223,50 @@ local function createPopup()
     content:SetPoint("TOPLEFT", frame, "TOPLEFT", SPACING.MD, -LAYOUT.PAD_TOP)
     content:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -SPACING.MD, SPACING.MD)
 
-    local section = buildSection(content, "Armory")
-    section:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    section:SetPoint("RIGHT", content, "RIGHT", 0, 0)
+    -- Two half-width boxes side by side, separated by the same gutter the reference uses between panes.
+    local columnWidth = (LAYOUT.FRAME_W - SPACING.MD * 2 - SPACING.SM) / 2
+    local VALUE_SECTION_H = LAYOUT.SECTION_PAD * 2 + LAYOUT.VALUE_H
 
-    -- 1) Character group: name on top at 16px, realm below at 14px, both white for legibility.
-    local CHARACTER_BODY = LAYOUT.NAME_H + SPACING.XS + LAYOUT.REALM_H
-    local characterGroup = buildGroup(section.body, "Character")
-    characterGroup:SetPoint("TOPLEFT", section.body, "TOPLEFT", 0, 0)
-    characterGroup:SetPoint("RIGHT", section.body, "RIGHT", 0, 0)
-    sizeGroup(characterGroup, CHARACTER_BODY)
+    local nameSection = buildSection(content, "Character")
+    nameSection:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    nameSection:SetSize(columnWidth, VALUE_SECTION_H)
 
-    local nameText = characterGroup.body:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-    nameText:SetPoint("TOPLEFT", characterGroup.body, "TOPLEFT", 0, 0)
-    nameText:SetPoint("RIGHT", characterGroup.body, "RIGHT", 0, 0)
-    nameText:SetHeight(LAYOUT.NAME_H)
+    local nameText = nameSection.body:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+    nameText:SetAllPoints(nameSection.body)
     nameText:SetJustifyH("LEFT")
     nameText:SetWordWrap(false)
     frame.nameText = nameText
 
-    local realmText = characterGroup.body:CreateFontString(nil, "OVERLAY", "GameFontHighlightMedium")
-    realmText:SetPoint("TOPLEFT", nameText, "BOTTOMLEFT", 0, -SPACING.XS)
-    realmText:SetPoint("RIGHT", characterGroup.body, "RIGHT", 0, 0)
-    realmText:SetHeight(LAYOUT.REALM_H)
+    local realmSection = buildSection(content, "Realm")
+    realmSection:SetPoint("TOPLEFT", nameSection, "TOPRIGHT", SPACING.SM, 0)
+    realmSection:SetSize(columnWidth, VALUE_SECTION_H)
+
+    local realmText = realmSection.body:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+    realmText:SetAllPoints(realmSection.body)
     realmText:SetJustifyH("LEFT")
     realmText:SetWordWrap(false)
     frame.realmText = realmText
 
-    -- 2) Link group: help line pinned to one label row above the pre-selected edit box.
-    local LINK_BODY = LAYOUT.LABEL_H + SPACING.SM + LAYOUT.EDIT_H
-    local linkGroup = buildGroup(section.body, "Link")
-    linkGroup:SetPoint("TOPLEFT", characterGroup, "BOTTOMLEFT", 0, -SPACING.MD)
-    linkGroup:SetPoint("RIGHT", section.body, "RIGHT", 0, 0)
-    sizeGroup(linkGroup, LINK_BODY)
+    -- Full-width link box below, LG gap leaves room for its floating label.
+    local LINK_SECTION_H = LAYOUT.SECTION_PAD * 2 + LAYOUT.LABEL_H + SPACING.SM + LAYOUT.EDIT_H
+    local linkSection = buildSection(content, "Link")
+    linkSection:SetPoint("TOPLEFT", nameSection, "BOTTOMLEFT", 0, -SPACING.LG)
+    linkSection:SetPoint("RIGHT", content, "RIGHT", 0, 0)
+    linkSection:SetHeight(LINK_SECTION_H)
 
-    local linkHelp = linkGroup.body:CreateFontString(nil, "OVERLAY", "GameFontDisable")
-    linkHelp:SetPoint("TOPLEFT", linkGroup.body, "TOPLEFT", 0, 0)
-    linkHelp:SetPoint("RIGHT", linkGroup.body, "RIGHT", 0, 0)
+    local linkHelp = linkSection.body:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+    linkHelp:SetPoint("TOPLEFT", linkSection.body, "TOPLEFT", 0, 0)
+    linkHelp:SetPoint("RIGHT", linkSection.body, "RIGHT", 0, 0)
     linkHelp:SetHeight(LAYOUT.LABEL_H)
     linkHelp:SetJustifyH("LEFT")
     linkHelp:SetWordWrap(false)
     linkHelp:SetText(copyHint())
 
-    local link = CreateFrame("EditBox", nil, linkGroup.body, "InputBoxTemplate")
+    local link = CreateFrame("EditBox", nil, linkSection.body, "InputBoxTemplate")
     link:SetHeight(LAYOUT.EDIT_H)
     -- NATIVE: InputBoxVisualTemplate anchors its Left border texture 5px outside the frame, shift the left anchor so the art lines up with the body edge.
     link:SetPoint("TOPLEFT", linkHelp, "BOTTOMLEFT", 5, -SPACING.SM)
-    link:SetPoint("RIGHT", linkGroup.body, "RIGHT", 0, 0)
+    link:SetPoint("RIGHT", linkSection.body, "RIGHT", 0, 0)
     link:SetAutoFocus(true)
     link:SetFontObject("ChatFontSmall")
     frame.link = link
@@ -323,10 +300,8 @@ local function createPopup()
         end)
     end)
 
-    -- Section height = padding + both groups + the gap between them, frame height adds the banner clearance and bottom inset.
-    local sectionHeight = LAYOUT.SECTION_PAD * 2 + characterGroup:GetHeight() + SPACING.MD + linkGroup:GetHeight()
-    section:SetHeight(sectionHeight)
-    frame:SetSize(LAYOUT.FRAME_W, LAYOUT.PAD_TOP + sectionHeight + SPACING.MD)
+    -- Frame height = banner clearance + value row + label gap + link box + bottom inset.
+    frame:SetSize(LAYOUT.FRAME_W, LAYOUT.PAD_TOP + VALUE_SECTION_H + SPACING.LG + LINK_SECTION_H + SPACING.MD)
 
     tinsert(UISpecialFrames, "PlayerArmoryLinkFrame")
 
