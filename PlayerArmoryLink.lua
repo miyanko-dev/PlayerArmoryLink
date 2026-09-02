@@ -266,17 +266,6 @@ local function appendMenu(_, root, context)
     end)
 end
 
-local function handleSlash(input)
-    local target = input and input:gsub("^%s+", ""):gsub("%s+$", "") or ""
-    if target == "" then
-        target = UnitName("player")
-    end
-
-    local name, realm = target:match("^([^%-]+)%-(.+)$")
-    name = name or target
-    showPopup(name, realmSlug(realm) or realmSlug(GetRealmName()))
-end
-
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("ADDON_LOADED")
 loader:SetScript("OnEvent", function(self, _, name)
@@ -297,8 +286,4 @@ loader:SetScript("OnEvent", function(self, _, name)
             Menu.ModifyMenu(tag, appendMenu)
         end
     end
-
-    SLASH_PLAYERARMORYLINK1 = "/armory"
-    SLASH_PLAYERARMORYLINK2 = "/pal"
-    SlashCmdList.PLAYERARMORYLINK = handleSlash
 end)
