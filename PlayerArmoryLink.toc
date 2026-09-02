@@ -1,4 +1,4 @@
-## Interface: 11509, 20505, 50504, 120007
+## Interface: 11509, 20506, 50504, 120100
 ## Title: Player Armory Link
 ## Notes: Right-click a player to copy their worldofwarcraft.blizzard.com armory link.
 ## Author: Marco Vrinssen
