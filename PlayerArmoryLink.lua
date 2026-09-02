@@ -49,22 +49,16 @@ local UNIT_MENU_TAGS = {
     "MENU_UNIT_RECENT_ALLY_OFFLINE",
 }
 
--- Spacing scale shared with QuestieGuide, ChatScan and GatherMate2NodeAlert.
-local SPACING = {
-    XS = 4,
-    SM = 8,
-    MD = 16,
-    LG = 24,
-}
-
--- Frame and widget dimensions, PAD_TOP clears the dialog-box-header banner and SECTION_PAD clears the tooltip-border art.
+-- One 4px unit and its multiples cover every distance in the dialog.
+local UNIT = 4
 local LAYOUT = {
     FRAME_W = 480,
-    PAD_TOP = 48,
-    SECTION_PAD = 12,
-    LABEL_H = 12, -- one GameFontNormal help line.
-    VALUE_H = 16, -- GameFontHighlightLarge name and realm lines.
-    EDIT_H = 20, -- link edit box.
+    BANNER = UNIT * 12, -- clears the dialog-box header
+    PAD = UNIT * 4, -- frame inset, gap between boxes, box body padding
+    LABEL_INSET = 2, -- box label sits 2px in from the box edge and one UNIT above it
+    LINE_LG = 16, -- GameFontHighlightLarge line
+    LINE = 12, -- GameFontNormal and GameFontDisable line
+    EDIT_H = 20, -- InputBoxTemplate
 }
 
 -- Lowercase connectors that realm names keep lowercase, and that UnitName glues onto the neighbouring word.
@@ -188,13 +182,13 @@ local function buildSection(parent, labelText)
     section:SetBackdropBorderColor(0.4, 0.4, 0.4)
 
     local label = section:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    label:SetPoint("BOTTOMLEFT", section, "TOPLEFT", LAYOUT.SECTION_PAD, SPACING.SM)
+    label:SetPoint("BOTTOMLEFT", section, "TOPLEFT", LAYOUT.LABEL_INSET, UNIT)
     label:SetText(labelText)
     section.label = label
 
     local body = CreateFrame("Frame", nil, section)
-    body:SetPoint("TOPLEFT", section, "TOPLEFT", LAYOUT.SECTION_PAD, -LAYOUT.SECTION_PAD)
-    body:SetPoint("BOTTOMRIGHT", section, "BOTTOMRIGHT", -LAYOUT.SECTION_PAD, LAYOUT.SECTION_PAD)
+    body:SetPoint("TOPLEFT", section, "TOPLEFT", LAYOUT.PAD, -LAYOUT.PAD)
+    body:SetPoint("BOTTOMRIGHT", section, "BOTTOMRIGHT", -LAYOUT.PAD, LAYOUT.PAD)
     section.body = body
 
     return section
@@ -218,18 +212,18 @@ local function createPopup()
     local closeButton = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     closeButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -4, -4)
 
-    -- The single content container, every section anchors inside it.
+    -- The single content container, every box anchors inside it.
     local content = CreateFrame("Frame", nil, frame)
-    content:SetPoint("TOPLEFT", frame, "TOPLEFT", SPACING.MD, -LAYOUT.PAD_TOP)
-    content:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -SPACING.MD, SPACING.MD)
+    content:SetPoint("TOPLEFT", frame, "TOPLEFT", LAYOUT.PAD, -LAYOUT.BANNER)
+    content:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -LAYOUT.PAD, LAYOUT.PAD)
 
-    -- Two half-width boxes side by side, separated by the same gutter the reference uses between panes.
-    local columnWidth = (LAYOUT.FRAME_W - SPACING.MD * 2 - SPACING.SM) / 2
-    local VALUE_SECTION_H = LAYOUT.SECTION_PAD * 2 + LAYOUT.VALUE_H
+    -- Two half-width boxes side by side.
+    local columnWidth = (LAYOUT.FRAME_W - LAYOUT.PAD * 3) / 2
+    local VALUE_BOX_H = LAYOUT.PAD * 2 + LAYOUT.LINE_LG
 
     local nameSection = buildSection(content, "Character")
     nameSection:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    nameSection:SetSize(columnWidth, VALUE_SECTION_H)
+    nameSection:SetSize(columnWidth, VALUE_BOX_H)
 
     local nameText = nameSection.body:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     nameText:SetAllPoints(nameSection.body)
@@ -238,8 +232,8 @@ local function createPopup()
     frame.nameText = nameText
 
     local realmSection = buildSection(content, "Realm")
-    realmSection:SetPoint("TOPLEFT", nameSection, "TOPRIGHT", SPACING.SM, 0)
-    realmSection:SetSize(columnWidth, VALUE_SECTION_H)
+    realmSection:SetPoint("TOPLEFT", nameSection, "TOPRIGHT", LAYOUT.PAD, 0)
+    realmSection:SetSize(columnWidth, VALUE_BOX_H)
 
     local realmText = realmSection.body:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     realmText:SetAllPoints(realmSection.body)
@@ -247,17 +241,17 @@ local function createPopup()
     realmText:SetWordWrap(false)
     frame.realmText = realmText
 
-    -- Full-width link box below, LG gap leaves room for its floating label.
-    local LINK_SECTION_H = LAYOUT.SECTION_PAD * 2 + LAYOUT.LABEL_H + SPACING.SM + LAYOUT.EDIT_H
+    -- Full-width link box below, the PAD gap is exactly one label line plus its UNIT offset.
+    local LINK_BOX_H = LAYOUT.PAD * 2 + LAYOUT.LINE + UNIT * 2 + LAYOUT.EDIT_H
     local linkSection = buildSection(content, "Link")
-    linkSection:SetPoint("TOPLEFT", nameSection, "BOTTOMLEFT", 0, -SPACING.LG)
+    linkSection:SetPoint("TOPLEFT", nameSection, "BOTTOMLEFT", 0, -LAYOUT.PAD)
     linkSection:SetPoint("RIGHT", content, "RIGHT", 0, 0)
-    linkSection:SetHeight(LINK_SECTION_H)
+    linkSection:SetHeight(LINK_BOX_H)
 
     local linkHelp = linkSection.body:CreateFontString(nil, "OVERLAY", "GameFontDisable")
     linkHelp:SetPoint("TOPLEFT", linkSection.body, "TOPLEFT", 0, 0)
     linkHelp:SetPoint("RIGHT", linkSection.body, "RIGHT", 0, 0)
-    linkHelp:SetHeight(LAYOUT.LABEL_H)
+    linkHelp:SetHeight(LAYOUT.LINE)
     linkHelp:SetJustifyH("LEFT")
     linkHelp:SetWordWrap(false)
     linkHelp:SetText(copyHint())
@@ -265,7 +259,7 @@ local function createPopup()
     local link = CreateFrame("EditBox", nil, linkSection.body, "InputBoxTemplate")
     link:SetHeight(LAYOUT.EDIT_H)
     -- NATIVE: InputBoxVisualTemplate anchors its Left border texture 5px outside the frame, shift the left anchor so the art lines up with the body edge.
-    link:SetPoint("TOPLEFT", linkHelp, "BOTTOMLEFT", 5, -SPACING.SM)
+    link:SetPoint("TOPLEFT", linkHelp, "BOTTOMLEFT", 5, -UNIT * 2)
     link:SetPoint("RIGHT", linkSection.body, "RIGHT", 0, 0)
     link:SetAutoFocus(true)
     link:SetFontObject("ChatFontSmall")
@@ -300,8 +294,8 @@ local function createPopup()
         end)
     end)
 
-    -- Frame height = banner clearance + value row + label gap + link box + bottom inset.
-    frame:SetSize(LAYOUT.FRAME_W, LAYOUT.PAD_TOP + VALUE_SECTION_H + SPACING.LG + LINK_SECTION_H + SPACING.MD)
+    -- Frame height = banner clearance + value row + gap + link box + bottom inset.
+    frame:SetSize(LAYOUT.FRAME_W, LAYOUT.BANNER + VALUE_BOX_H + LAYOUT.PAD + LINK_BOX_H + LAYOUT.PAD)
 
     tinsert(UISpecialFrames, "PlayerArmoryLinkFrame")
 
