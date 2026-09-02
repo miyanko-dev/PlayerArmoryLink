@@ -19,14 +19,6 @@ local LOCALE_SLUGS = {
     zhTW = "zh-tw",
 }
 
--- Ordered for the dropdown, keyed by the path segment the armory expects.
-local GAME_VERSIONS = {
-    {slug = "classic1x", label = "Classic Era"},
-    {slug = "classicann", label = "Anniversary"},
-    {slug = "classic", label = "Classic Progression"},
-    {slug = "worldsoul", label = "Retail"},
-}
-
 -- Keyed by WOW_PROJECT_ID, whose constants are not all defined on every client.
 local PROJECT_VERSIONS = {
     [1] = "worldsoul", -- Mainline
@@ -59,23 +51,6 @@ local UNIT_MENU_TAGS = {
 
 local popup
 
-local function defaultVersion()
-    return PROJECT_VERSIONS[WOW_PROJECT_ID] or "classic"
-end
-
-local function selectedVersion()
-    return PlayerArmoryLinkDB and PlayerArmoryLinkDB.version or defaultVersion()
-end
-
-local function versionLabel(slug)
-    for _, version in ipairs(GAME_VERSIONS) do
-        if version.slug == slug then
-            return version.label
-        end
-    end
-    return slug
-end
-
 -- Armory realm slugs are lowercase and dash separated, and UnitName returns realms without spaces.
 local function realmSlug(realm)
     if type(realm) ~= "string" or realm == "" then
@@ -89,10 +64,11 @@ local function realmSlug(realm)
     return realm ~= "" and realm or nil
 end
 
-local function buildUrl(name, realm, versionSlug)
+local function buildUrl(name, realm)
     local locale = LOCALE_SLUGS[GetLocale()] or "en-us"
+    local version = PROJECT_VERSIONS[WOW_PROJECT_ID] or "classic"
     local region = REGION_SLUGS[GetCurrentRegion()] or "us"
-    return ARMORY_URL:format(locale, versionSlug, region, realm, name:lower())
+    return ARMORY_URL:format(locale, version, region, realm, name:lower())
 end
 
 local function copyHint()
@@ -102,34 +78,9 @@ local function copyHint()
     return "Press CTRL+C to copy and close"
 end
 
-local function refreshPopup()
-    local frame = popup
-    if not frame or not frame.playerName then
-        return
-    end
-
-    local slug = selectedVersion()
-    frame.url = buildUrl(frame.playerName, frame.playerRealm, slug)
-    frame.Subtitle:SetText(("%s  %s  %s"):format(frame.playerName, frame.playerRealm, versionLabel(slug)))
-    frame.Link:SetText(frame.url)
-    frame.Link:SetCursorPosition(0)
-    frame.Link:HighlightText()
-    frame.Version:GenerateMenu()
-end
-
-local function setVersion(slug)
-    PlayerArmoryLinkDB.version = slug
-    refreshPopup()
-    return MenuResponse.CloseAll
-end
-
-local function isVersion(slug)
-    return selectedVersion() == slug
-end
-
 local function createPopup()
     local frame = CreateFrame("Frame", "PlayerArmoryLinkFrame", UIParent)
-    frame:SetSize(420, 148)
+    frame:SetSize(420, 118)
     frame:SetPoint("CENTER", 0, 140)
     frame:SetFrameStrata("DIALOG")
     frame:SetToplevel(true)
@@ -191,18 +142,8 @@ local function createPopup()
     end)
 
     local hint = frame:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-    hint:SetPoint("TOPLEFT", link, "BOTTOMLEFT", 2, -10)
+    hint:SetPoint("TOP", link, "BOTTOM", -4, -10)
     hint:SetText(copyHint())
-
-    local version = CreateFrame("DropdownButton", nil, frame, "WowStyle1DropdownTemplate")
-    version:SetSize(150, 22)
-    version:SetPoint("BOTTOMRIGHT", -20, 16)
-    version:SetupMenu(function(_, root)
-        for _, entry in ipairs(GAME_VERSIONS) do
-            root:CreateRadio(entry.label, isVersion, setVersion, entry.slug)
-        end
-    end)
-    frame.Version = version
 
     tinsert(UISpecialFrames, "PlayerArmoryLinkFrame")
 
@@ -211,11 +152,13 @@ end
 
 local function showPopup(name, realm)
     popup = popup or createPopup()
-    popup.playerName = name
-    popup.playerRealm = realm
+    popup.url = buildUrl(name, realm)
+    popup.Subtitle:SetText(("%s  %s"):format(name, realm))
+    popup.Link:SetText(popup.url)
+    popup.Link:SetCursorPosition(0)
     popup:Show()
-    refreshPopup()
     popup.Link:SetFocus()
+    popup.Link:HighlightText()
 end
 
 -- Menu context carries a name for roster entries and a unit for frames, never both reliably.
@@ -261,24 +204,8 @@ local function appendMenu(_, root, context)
     end)
 end
 
-local loader = CreateFrame("Frame")
-loader:RegisterEvent("ADDON_LOADED")
-loader:SetScript("OnEvent", function(self, _, name)
-    if name ~= "PlayerArmoryLink" then
-        return
+if Menu and Menu.ModifyMenu then
+    for _, tag in ipairs(UNIT_MENU_TAGS) do
+        Menu.ModifyMenu(tag, appendMenu)
     end
-    self:UnregisterEvent("ADDON_LOADED")
-
-    if type(PlayerArmoryLinkDB) ~= "table" then
-        PlayerArmoryLinkDB = {}
-    end
-    if not PlayerArmoryLinkDB.version then
-        PlayerArmoryLinkDB.version = defaultVersion()
-    end
-
-    if Menu and Menu.ModifyMenu then
-        for _, tag in ipairs(UNIT_MENU_TAGS) do
-            Menu.ModifyMenu(tag, appendMenu)
-        end
-    end
-end)
+end
