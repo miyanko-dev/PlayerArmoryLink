@@ -4,6 +4,5 @@
 ## Author: Marco Vrinssen
 ## Version: 1.0.0
 ## IconTexture: Interface\Icons\INV_Misc_Note_02
-## SavedVariables: PlayerArmoryLinkDB
 
 PlayerArmoryLink.lua

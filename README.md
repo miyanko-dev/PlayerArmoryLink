@@ -7,8 +7,8 @@ every armory-supported flavor: Classic Era, Anniversary, Classic Progression and
 
 - "Armory Link" entry on every player right-click menu: unit frames, party and raid frames, chat names, friends list, guild roster, battleground scoreboard
 - Pre-selected link in a native dialog, so CMD+C (macOS) or CTRL+C (Windows) copies and closes it in one keypress
-- Game version auto-detected from the running client, switchable from the dropdown and remembered
-- Realm and region slugs built from the live client, including camel-case realms like `HydraxianWaterlords`
+- Zero configuration: realm, region, locale and game version all come from the running client
+- Realm slugs handle camel-case realms like `HydraxianWaterlords` and apostrophes like `Rhok'delar`
 
 ## Installation
 
@@ -21,8 +21,8 @@ every armory-supported flavor: Classic Era, Anniversary, Classic Progression and
 
 - Right-click a player portrait, name or roster row, then pick **Armory Link**.
 - The link is already selected. Press CMD+C or CTRL+C to copy it, the dialog closes itself.
-- The dropdown in the bottom-right switches game version. The choice is stored in
-  `PlayerArmoryLinkDB` per account.
+- Nothing to configure and nothing saved. Everything in the URL is read from the client, and
+  you only ever right-click players who are on your realm and your game version.
 
 ## URL format
 
@@ -47,8 +47,7 @@ Version detection reads `WOW_PROJECT_ID`, so the running client picks its own se
 | 19 | Classic Progression 5.5.4 | `classic` |
 
 The Anniversary realms progress through expansions, so their project ID moves with them.
-When that happens the dropdown still reaches the right armory, and the default can be
-corrected in one line.
+Adding the new ID to `PROJECT_VERSIONS` is a one-line change.
 
 ## Notes
 
@@ -57,6 +56,6 @@ menu keeps working. Blizzard's own menu system (`Menu.ModifyMenu`) is used, so n
 is tainted and combat is unaffected.
 
 Every API and template it touches (`Menu.ModifyMenu`, the `MENU_UNIT_*` tags,
-`DialogBorderTemplate`, `InputBoxTemplate`, `WowStyle1DropdownTemplate`, `UIPanelCloseButton`,
-`IsMetaKeyDown`, `UISpecialFrames`) is present on all four clients, and the registered unit
-menu names are identical across them.
+`DialogBorderTemplate`, `InputBoxTemplate`, `UIPanelCloseButton`, `IsMetaKeyDown`,
+`UISpecialFrames`) is present on all four clients, and the registered unit menu names are
+identical across them.
