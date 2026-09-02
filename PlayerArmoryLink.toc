@@ -1,0 +1,9 @@
+## Interface: 11509, 20505, 50504, 120007
+## Title: Player Armory Link
+## Notes: Right-click a player to copy their worldofwarcraft.blizzard.com armory link.
+## Author: Marco Vrinssen
+## Version: 1.0.0
+## IconTexture: Interface\Icons\INV_Misc_Note_02
+## SavedVariables: PlayerArmoryLinkDB
+
+PlayerArmoryLink.lua
