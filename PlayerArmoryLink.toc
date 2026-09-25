@@ -1,8 +1,12 @@
-## Interface: 11509, 20506, 50504, 120100
+## Interface: 11508, 11509, 16001, 20506, 50504, 120100
 ## Title: Player Armory Link
 ## Notes: Right-click a player to copy their worldofwarcraft.blizzard.com armory link.
 ## Author: miyanko
-## Version: 1.0.0
+## Version: 1.2.0
 ## IconTexture: Interface\Icons\INV_Misc_Note_02
 
-PlayerArmoryLink.lua
+Core\Client.lua
+Core\Realm.lua
+Core\Link.lua
+UI\CopyDialog.lua
+Core\UnitMenu.lua

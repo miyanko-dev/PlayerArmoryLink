@@ -1,7 +1,8 @@
 # PlayerArmoryLink
 
 Right-click any player and copy their `worldofwarcraft.blizzard.com` armory link. Works on
-every armory-supported flavor: Classic Era, Anniversary, Classic Progression and Retail.
+every armory-supported flavor: Classic Era, WoW Forever, Anniversary, Classic Progression and
+Retail.
 
 ## Features
 
@@ -14,8 +15,8 @@ every armory-supported flavor: Classic Era, Anniversary, Classic Progression and
 
 ## Installation
 
-1. Copy the `PlayerArmoryLink/` folder into:
-   `World of Warcraft/_classic_era_/Interface/AddOns/`
+1. Copy the `PlayerArmoryLink/` folder into the `Interface/AddOns/` directory of the flavor you
+   play, for example `World of Warcraft/_classic_era_/Interface/AddOns/`.
 2. Restart the game or `/reload`.
 3. Enable **Player Armory Link** in the AddOns list.
 
@@ -28,6 +29,26 @@ every armory-supported flavor: Classic Era, Anniversary, Classic Progression and
 - Nothing to configure and nothing saved. Everything in the URL is read from the client, and
   you only ever right-click players who are on your realm and your game version.
 
+## Layout
+
+One codebase serves every flavor. `Core/Client.lua` is the only file that knows the clients
+differ; everything else is written against one behaviour.
+
+```
+PlayerArmoryLink.toc   ## Interface: 11508, 11509, 16001, 20506, 50504, 120100
+Core/Client.lua        game version, region, copy modifier, secret-value guard, menu context shape
+Core/Realm.lua         realm word splitting, armory slug, display casing
+Core/Link.lua          armory URL assembly
+UI/CopyDialog.lua      the copy dialog
+Core/UnitMenu.lua      unit menu entry and player resolution
+```
+
+The UI is not split per version. Every template, font object and texture the dialog touches
+(`BackdropTemplate`, `InputBoxTemplate`, `UIPanelCloseButton`, `GameFontNormal`,
+`GameFontHighlightLarge`, `GameFontDisable`, `ChatFontSmall`, the `UI-DialogBox-*` art) was
+confirmed present on both Classic Era 1.15.9 and WoW Forever 1.60.1, so there is nothing for a
+per-version variant to do.
+
 ## URL format
 
 ```
@@ -37,21 +58,27 @@ https://worldofwarcraft.blizzard.com/<locale>/<version>/<region>/armory/characte
 | Version | Path segment |
 | --- | --- |
 | Classic Era | `classic1x` |
+| WoW Forever | `classic1x` |
 | Anniversary | `classicann` |
 | Classic Progression | `classic` |
 | Retail | `worldsoul` |
 
-Version detection reads `WOW_PROJECT_ID`, so the running client picks its own segment:
+The interface number is checked first, then `WOW_PROJECT_ID`, then the interface band:
 
-| `WOW_PROJECT_ID` | Client | Segment |
+| Signal | Client | Segment |
 | --- | --- | --- |
-| 1 | Mainline 12.1.0 | `worldsoul` |
-| 2 | Classic Era 1.15.9 | `classic1x` |
-| 5 | Anniversary 2.5.6 | `classicann` |
-| 19 | Classic Progression 5.5.4 | `classic` |
+| interface 16000-16999 | WoW Forever 1.60 | `classic1x` |
+| `WOW_PROJECT_ID` 1 | Mainline 12.1.0 | `worldsoul` |
+| `WOW_PROJECT_ID` 2 | Classic Era 1.15.x | `classic1x` |
+| `WOW_PROJECT_ID` 5 | Anniversary 2.5.6 | `classicann` |
+| `WOW_PROJECT_ID` 19 | Classic Progression 5.5.4 | `classic` |
+| unmapped, interface < 20000 | Vanilla lineage | `classic1x` |
+
+WoW Forever has to be caught before the project id, because it runs the retail engine and
+reports `WOW_PROJECT_MAINLINE`. On the project id alone it would build a retail armory URL.
 
 The Anniversary realms progress through expansions, so their project ID moves with them.
-Adding the new ID to `PROJECT_VERSIONS` is a one-line change.
+Adding the new ID to `PROJECT_SEGMENTS` in `Core/Client.lua` is a one-line change.
 
 ## Notes
 
@@ -59,7 +86,6 @@ The addon adds a menu entry rather than replacing the portrait right-click, so t
 menu keeps working. Blizzard's own menu system (`Menu.ModifyMenu`) is used, so no dropdown
 is tainted and combat is unaffected.
 
-Every API and template it touches (`Menu.ModifyMenu`, the `MENU_UNIT_*` tags,
-`DialogBorderTemplate`, `InputBoxTemplate`, `UIPanelCloseButton`, `IsMetaKeyDown`,
-`UISpecialFrames`) is present on all four clients, and the registered unit menu names are
-identical across them.
+On WoW Forever a unit's name can come back as a secret value under addon restrictions. The
+addon checks `canaccessvalue` before it touches a name and simply omits the menu entry when
+the name is unreadable, so nothing errors and nothing leaks.
