@@ -1,19 +1,19 @@
 # PlayerArmoryLink
 
-Right-click any player and copy their `worldofwarcraft.blizzard.com` armory link. Works on
-Classic Era 1.15.x and WoW Forever 1.60.x.
+Right-click any player and copy their `worldofwarcraft.blizzard.com` armory link. Built for
+WoW Forever 1.60.x.
 
 ## Features
 
-- An **Armory Link** entry on every player right-click menu: your own portrait, target and focus frames, party and raid frames, chat names, the friends list, the guild and community rosters, recent allies (WoW Forever) and the battleground scoreboard
-- A native dialog that shows the character's name and realm, with the link already selected. On WoW Forever the name includes the surname
-- Each game version gets its own native dialog: the classic dialog box and header on Classic Era, the metal-framed dialog and banner on WoW Forever, both in the game's own fonts
+- An **Armory Link** entry on every player right-click menu: your own portrait, target and focus frames, party and raid frames, chat names, the friends list, the guild and community rosters, recent allies and the battleground scoreboard
+- A native dialog that shows the character's name and realm, with the link already selected. The name includes the surname
+- The game's own dialog: the metal-framed border and banner of the game menu, in the game's own fonts
 - One keypress copies the link and closes the dialog: CMD+C on macOS, CTRL+C on Windows
 - Nothing to configure and nothing saved. Realm, region and locale all come from the running client
 
 ## Installation
 
-1. Copy the `PlayerArmoryLink/` folder into the `Interface/AddOns/` folder of your Classic Era or WoW Forever install.
+1. Copy the `PlayerArmoryLink/` folder into the `Interface/AddOns/` folder of your WoW Forever install.
 2. Restart the game or `/reload`.
 3. Enable **Player Armory Link** in the AddOns list.
 
@@ -25,16 +25,14 @@ Classic Era 1.15.x and WoW Forever 1.60.x.
 
 ## Requirements
 
-Classic Era 1.15.x or WoW Forever 1.60.x. One folder serves both.
+WoW Forever 1.60.x (`## Interface: 16001`). The Classic Era 1.15.x version lives on the `1.15.x-backup` branch.
 
 ## Restrictions
 
-Classic Era links use the Classic Era armory (`classic1x`).
+WoW Forever has no armory pages yet. Until Blizzard publishes Forever characters, links use the
+Classic Era armory format (`classic1x`), so they may not resolve.
 
-WoW Forever has no armory pages yet. Until Blizzard publishes Forever characters, Forever links
-use the Classic Era format too, so they may not resolve.
-
-No entry appears for NPCs. On WoW Forever it also stays hidden for players whose name the game
+No entry appears for NPCs. It also stays hidden for players whose name the game
 hides from addons inside restricted content, so nothing errors and nothing leaks.
 
 The entry is added through Blizzard's own menu system (`Menu.ModifyMenu`), so the native menu

@@ -5,12 +5,12 @@ local TITLE = "Player Armory Link"
 local COPIED_TEXT = "Armory link copied"
 local WIDTH = 448
 
--- Blizzard's own text roles, so each client draws its native faces and sizes: the name as a gold heading, the realm as white body text, the hint as grey help text.
+-- Blizzard's own text roles: the name as a gold heading, the realm as white body text, the hint as grey help text.
 local NAME_FONT = GameFontNormalLarge
 local REALM_FONT = GameFontHighlight
 local HINT_FONT = GameFontDisableSmall
 
--- Both clients' dialog headers hang about 28px into the frame, so content starts a little below them.
+-- The dialog header hangs about 28px into the frame, so content starts a little below it.
 local CONTENT_TOP = 40
 local PADDING = 20
 local NAME_GAP = 2
@@ -26,12 +26,22 @@ local CLOSE_DELAY = 0.2
 
 local dialog
 
+-- Forever's GameMenuFrame chrome: the DiamondMetal border, the banner header and the standard close button.
+local function createDialogFrame()
+    local frame = CreateFrame("Frame", FRAME_NAME, UIParent)
+    frame.Border = CreateFrame("Frame", nil, frame, "DialogBorderTemplate")
+    frame.Header = CreateFrame("Frame", nil, frame, "DialogHeaderTemplate")
+    local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+    close:SetPoint("TOPRIGHT", -2, -2)
+    return frame
+end
+
 local function copyHint()
     local key = IsMacClient() and "CMD" or "CTRL"
     return "Press " .. key .. "+C to copy and close."
 end
 
--- Line heights come from the font objects, so the layout follows each client's own font sizes.
+-- Line heights come from the font objects, so the layout follows the game's own font sizes.
 local function fontHeight(font)
     local _, height = font:GetFont()
     return height
@@ -88,7 +98,7 @@ local function createLinkBox(frame)
 end
 
 local function createDialog()
-    local frame = ns.CreateDialogFrame(FRAME_NAME)
+    local frame = createDialogFrame()
     frame:SetFrameStrata("DIALOG")
     frame:SetToplevel(true)
     frame:SetClampedToScreen(true)

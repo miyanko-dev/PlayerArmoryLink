@@ -2,7 +2,7 @@ local _, ns = ...
 
 local ENTRY_TEXT = "Armory Link"
 
--- Every unit menu either client can open on a player, each traced to its UnitPopup_OpenMenu caller. WORLD_STATE_SCORE is the 1.15 battleground scoreboard, PVP_SCOREBOARD and the RECENT_ALLY pair exist only on 1.60; a tag the running client never opens stays inert.
+-- Every unit menu that can open on a player. Each tag is "MENU_UNIT_" plus the menu name UnitPopupManager:OpenMenu receives.
 local MENU_TAGS = {
     "MENU_UNIT_SELF",
     "MENU_UNIT_PLAYER",
@@ -15,14 +15,13 @@ local MENU_TAGS = {
     "MENU_UNIT_FRIEND_OFFLINE",
     "MENU_UNIT_CHAT_ROSTER",
     "MENU_UNIT_PVP_SCOREBOARD",
-    "MENU_UNIT_WORLD_STATE_SCORE",
     "MENU_UNIT_COMMUNITIES_GUILD_MEMBER",
     "MENU_UNIT_COMMUNITIES_WOW_MEMBER",
     "MENU_UNIT_RECENT_ALLY",
     "MENU_UNIT_RECENT_ALLY_OFFLINE",
 }
 
--- A name the menu left joined: "First Surname" or "First-Surname" on 1.60, "Name-Realm" on 1.15.
+-- A roster name the menu left joined: "First Surname", or the chat link form "First-Surname".
 local function splitFullName(fullName)
     local first, surname = fullName:match("^([^%s%-]+)[%s%-](.+)$")
     if first then
@@ -31,23 +30,32 @@ local function splitFullName(fullName)
     return fullName
 end
 
--- Unit frames carry a unit, rosters only a name. UnitName beats the context's UnitNameUnmodified because its 1.60 secrecy rule exempts players in PvP. Its second return is a realm on 1.15 and a surname on 1.60.
+-- UnitPopupManager:OpenMenu fills name and surname from UnitNameUnmodified for unit menus, so unit frames and rosters read the same source.
 local function readName(context)
     local unit = context.unit
-    if unit and UnitExists(unit) then
-        if not UnitIsPlayer(unit) then
-            return nil
-        end
-        return UnitName(unit)
-    end
-    if not context.name then
+    if unit and UnitExists(unit) and not UnitIsPlayer(unit) then
         return nil
     end
-    local suffix = ns.ContextSuffix(context)
-    if suffix then
-        return context.name, suffix
+    local name = context.name
+    if not name then
+        return nil
     end
-    return splitFullName(context.name)
+    local surname = context.surname
+    if surname and surname ~= "" then
+        return name, surname
+    end
+    return splitFullName(name)
+end
+
+-- With regional unique names the second part is a surname and every player shares the current realm. Without them it is the player's realm, as Blizzard's own menu treats it.
+local function identify(name, suffix)
+    if RegionalUniqueNamesEnabled() then
+        return NameUtil.GetFullNameWithoutRealm(name, suffix), GetRealmName()
+    end
+    if suffix and suffix ~= "" then
+        return name, suffix
+    end
+    return name, GetRealmName()
 end
 
 local function readPlayer(context)
@@ -55,7 +63,7 @@ local function readPlayer(context)
     if type(name) ~= "string" or name == "" or name == UNKNOWN then
         return nil
     end
-    local displayName, realm = ns.Identify(name, suffix)
+    local displayName, realm = identify(name, suffix)
     local url = ns.ArmoryUrl(realm, name)
     if not url then
         return nil
@@ -63,7 +71,7 @@ local function readPlayer(context)
     return displayName, realm, url
 end
 
--- On 1.60 a name under identity restriction arrives as a secret value and any string operation on it throws, so the whole read runs in pcall. canaccessvalue cannot guard it: it rejects secrets from tainted callers. 1.15 never issues secrets, so the pcall costs nothing there.
+-- A name under identity restriction arrives as a secret value and any string operation on it throws, so the whole read runs in pcall. canaccessvalue cannot guard it: it rejects secrets from tainted callers.
 local function appendEntry(_, root, context)
     local ok, displayName, realm, url = pcall(readPlayer, context)
     if not ok or not url then
