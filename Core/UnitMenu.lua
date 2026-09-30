@@ -1,21 +1,18 @@
 local _, ns = ...
 
-local MENU_ENTRY_TEXT = "Armory Link"
+local ENTRY_TEXT = "Armory Link"
 
--- Every tag is registered by UnitPopupManager on both builds, so one list serves both. A tag no client registers is inert, Menu.ModifyMenu only asserts that it is a string.
-local UNIT_MENU_TAGS = {
+-- Every unit menu either client can open on a player, each traced to its UnitPopup_OpenMenu caller. WORLD_STATE_SCORE is the 1.15 battleground scoreboard, PVP_SCOREBOARD and the RECENT_ALLY pair exist only on 1.60; a tag the running client never opens stays inert.
+local MENU_TAGS = {
     "MENU_UNIT_SELF",
     "MENU_UNIT_PLAYER",
     "MENU_UNIT_PARTY",
-    "MENU_UNIT_RAID",
     "MENU_UNIT_RAID_PLAYER",
     "MENU_UNIT_ENEMY_PLAYER",
+    "MENU_UNIT_RAID",
     "MENU_UNIT_FOCUS",
-    "MENU_UNIT_ARENAENEMY",
     "MENU_UNIT_FRIEND",
     "MENU_UNIT_FRIEND_OFFLINE",
-    "MENU_UNIT_GUILD",
-    "MENU_UNIT_GUILD_OFFLINE",
     "MENU_UNIT_CHAT_ROSTER",
     "MENU_UNIT_PVP_SCOREBOARD",
     "MENU_UNIT_WORLD_STATE_SCORE",
@@ -25,66 +22,64 @@ local UNIT_MENU_TAGS = {
     "MENU_UNIT_RECENT_ALLY_OFFLINE",
 }
 
--- Menu context carries a name for roster entries and a unit for frames, never both reliably.
-local function resolvePlayer(context)
-    local name, realm = context.name, ns.ContextRealm(context)
-
-    if context.unit then
-        if not UnitIsPlayer(context.unit) then
-            return nil
-        end
-        -- UnitName is preferred over UnitNameUnmodified because 1.60 grants it an extra exception from unit-identity secrecy for player units.
-        local unitName, unitRealm = UnitName(context.unit)
-        if unitName ~= nil then
-            name, realm = unitName, unitRealm or realm
-        end
+-- A name the menu left joined: "First Surname" or "First-Surname" on 1.60, "Name-Realm" on 1.15.
+local function splitFullName(fullName)
+    local first, surname = fullName:match("^([^%s%-]+)[%s%-](.+)$")
+    if first then
+        return first, surname
     end
-
-    -- Screens out 1.60 secret values before any string operation touches them, and nil and UNKNOWN in the same pass.
-    if not ns.IsReadable(name) or type(name) ~= "string" or name == "" or name == UNKNOWN then
-        return nil
-    end
-    if realm ~= nil and (not ns.IsReadable(realm) or type(realm) ~= "string") then
-        realm = nil
-    end
-
-    -- A 1.60 client with regionally unique names leaves "Name-Realm" joined in the context, so the suffix is split off here.
-    local basename, suffix = name:match("^([^%-]+)%-(.+)$")
-    if basename then
-        name, realm = basename, realm or suffix
-    end
-
-    if realm == nil or realm == "" then
-        realm = GetRealmName()
-    end
-
-    return name, realm
+    return fullName
 end
 
-local function appendMenu(_, root, context)
-    if not context then
-        return
+-- Unit frames carry a unit, rosters only a name. UnitName beats the context's UnitNameUnmodified because its 1.60 secrecy rule exempts players in PvP. Its second return is a realm on 1.15 and a surname on 1.60.
+local function readName(context)
+    local unit = context.unit
+    if unit and UnitExists(unit) then
+        if not UnitIsPlayer(unit) then
+            return nil
+        end
+        return UnitName(unit)
     end
-    local name, realm = resolvePlayer(context)
-    if not name then
-        return
+    if not context.name then
+        return nil
     end
-    local url = ns.ArmoryUrl(name, realm)
+    local suffix = ns.ContextSuffix(context)
+    if suffix then
+        return context.name, suffix
+    end
+    return splitFullName(context.name)
+end
+
+local function readPlayer(context)
+    local name, suffix = readName(context)
+    if type(name) ~= "string" or name == "" or name == UNKNOWN then
+        return nil
+    end
+    local displayName, realm = ns.Identify(name, suffix)
+    local url = ns.ArmoryUrl(realm, name)
     if not url then
+        return nil
+    end
+    return displayName, realm, url
+end
+
+-- On 1.60 a name under identity restriction arrives as a secret value and any string operation on it throws, so the whole read runs in pcall. canaccessvalue cannot guard it: it rejects secrets from tainted callers. 1.15 never issues secrets, so the pcall costs nothing there.
+local function appendEntry(_, root, context)
+    local ok, displayName, realm, url = pcall(readPlayer, context)
+    if not ok or not url then
         return
     end
 
     root:CreateDivider()
+
     -- Deferred so the menu tears down before the dialog takes keyboard focus.
-    root:CreateButton(MENU_ENTRY_TEXT, function()
+    root:CreateButton(ENTRY_TEXT, function()
         C_Timer.After(0, function()
-            ns.ShowCopyDialog(name, realm, url)
+            ns.ShowCopyDialog(displayName, realm, url)
         end)
     end)
 end
 
-if Menu and Menu.ModifyMenu then
-    for _, tag in ipairs(UNIT_MENU_TAGS) do
-        Menu.ModifyMenu(tag, appendMenu)
-    end
+for _, tag in ipairs(MENU_TAGS) do
+    Menu.ModifyMenu(tag, appendEntry)
 end

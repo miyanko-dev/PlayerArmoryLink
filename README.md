@@ -1,91 +1,41 @@
 # PlayerArmoryLink
 
 Right-click any player and copy their `worldofwarcraft.blizzard.com` armory link. Works on
-every armory-supported flavor: Classic Era, WoW Forever, Anniversary, Classic Progression and
-Retail.
+Classic Era 1.15.x and WoW Forever 1.60.x.
 
 ## Features
 
-- "Armory Link" entry on every player right-click menu: unit frames, party and raid frames, chat names, friends list, guild roster, battleground scoreboard
-- Pre-selected link in a native dialog, so CMD+C (macOS) or CTRL+C (Windows) copies and closes it in one keypress
-- Dialog built from the same panel conventions as QuestieGuide, ChatScan and GatherMate2NodeAlert: dialog-box banner, three boxed sections, 4px spacing grid, nothing below 12px
-- Character and Realm boxes side by side at 16px, white and properly capitalized, with the Link box below
-- Zero configuration: realm, region, locale and game version all come from the running client
-- Realm slugs handle camel-case realms like `HydraxianWaterlords` and apostrophes like `Rhok'delar`
+- An **Armory Link** entry on every player right-click menu: your own portrait, target and focus frames, party and raid frames, chat names, the friends list, the guild and community rosters, recent allies (WoW Forever) and the battleground scoreboard
+- A native dialog that shows the character's name and realm, with the link already selected. On WoW Forever the name includes the surname
+- Each game version gets its own native dialog: the classic dialog box and header on Classic Era, the metal-framed dialog and banner on WoW Forever, both in the game's own fonts
+- One keypress copies the link and closes the dialog: CMD+C on macOS, CTRL+C on Windows
+- Nothing to configure and nothing saved. Realm, region and locale all come from the running client
 
 ## Installation
 
-1. Copy the `PlayerArmoryLink/` folder into the `Interface/AddOns/` directory of the flavor you
-   play, for example `World of Warcraft/_classic_era_/Interface/AddOns/`.
+1. Copy the `PlayerArmoryLink/` folder into the `Interface/AddOns/` folder of your Classic Era or WoW Forever install.
 2. Restart the game or `/reload`.
 3. Enable **Player Armory Link** in the AddOns list.
 
 ## Usage
 
 - Right-click a player portrait, name or roster row, then pick **Armory Link**.
-- The dialog shows Character and Realm boxes on top, the Link box below. The copy hint reads
-  CMD+C on a macOS client and CTRL+C elsewhere, resolved at runtime via `IsMacClient()`.
-- The link is already selected. Press CMD+C or CTRL+C to copy it, the dialog closes itself.
-- Nothing to configure and nothing saved. Everything in the URL is read from the client, and
-  you only ever right-click players who are on your realm and your game version.
+- The link is already selected. Press CMD+C or CTRL+C to copy it, and the dialog closes itself.
+- Escape or the close button dismisses the dialog without copying.
 
-## Layout
+## Requirements
 
-One codebase serves every flavor. `Core/Client.lua` is the only file that knows the clients
-differ; everything else is written against one behaviour.
+Classic Era 1.15.x or WoW Forever 1.60.x. One folder serves both.
 
-```
-PlayerArmoryLink.toc   ## Interface: 11508, 11509, 16001, 20506, 50504, 120100
-Core/Client.lua        game version, region, copy modifier, secret-value guard, menu context shape
-Core/Realm.lua         realm word splitting, armory slug, display casing
-Core/Link.lua          armory URL assembly
-UI/CopyDialog.lua      the copy dialog
-Core/UnitMenu.lua      unit menu entry and player resolution
-```
+## Restrictions
 
-The UI is not split per version. Every template, font object and texture the dialog touches
-(`BackdropTemplate`, `InputBoxTemplate`, `UIPanelCloseButton`, `GameFontNormal`,
-`GameFontHighlightLarge`, `GameFontDisable`, `ChatFontSmall`, the `UI-DialogBox-*` art) was
-confirmed present on both Classic Era 1.15.9 and WoW Forever 1.60.1, so there is nothing for a
-per-version variant to do.
+Classic Era links use the Classic Era armory (`classic1x`).
 
-## URL format
+WoW Forever has no armory pages yet. Until Blizzard publishes Forever characters, Forever links
+use the Classic Era format too, so they may not resolve.
 
-```
-https://worldofwarcraft.blizzard.com/<locale>/<version>/<region>/armory/character/<realm>/<name>
-```
+No entry appears for NPCs. On WoW Forever it also stays hidden for players whose name the game
+hides from addons inside restricted content, so nothing errors and nothing leaks.
 
-| Version | Path segment |
-| --- | --- |
-| Classic Era | `classic1x` |
-| WoW Forever | `classic1x` |
-| Anniversary | `classicann` |
-| Classic Progression | `classic` |
-| Retail | `worldsoul` |
-
-The interface number is checked first, then `WOW_PROJECT_ID`, then the interface band:
-
-| Signal | Client | Segment |
-| --- | --- | --- |
-| interface 16000-16999 | WoW Forever 1.60 | `classic1x` |
-| `WOW_PROJECT_ID` 1 | Mainline 12.1.0 | `worldsoul` |
-| `WOW_PROJECT_ID` 2 | Classic Era 1.15.x | `classic1x` |
-| `WOW_PROJECT_ID` 5 | Anniversary 2.5.6 | `classicann` |
-| `WOW_PROJECT_ID` 19 | Classic Progression 5.5.4 | `classic` |
-| unmapped, interface < 20000 | Vanilla lineage | `classic1x` |
-
-WoW Forever has to be caught before the project id, because it runs the retail engine and
-reports `WOW_PROJECT_MAINLINE`. On the project id alone it would build a retail armory URL.
-
-The Anniversary realms progress through expansions, so their project ID moves with them.
-Adding the new ID to `PROJECT_SEGMENTS` in `Core/Client.lua` is a one-line change.
-
-## Notes
-
-The addon adds a menu entry rather than replacing the portrait right-click, so the native
-menu keeps working. Blizzard's own menu system (`Menu.ModifyMenu`) is used, so no dropdown
-is tainted and combat is unaffected.
-
-On WoW Forever a unit's name can come back as a secret value under addon restrictions. The
-addon checks `canaccessvalue` before it touches a name and simply omits the menu entry when
-the name is unreadable, so nothing errors and nothing leaks.
+The entry is added through Blizzard's own menu system (`Menu.ModifyMenu`), so the native menu
+keeps working and nothing is tainted in combat.
