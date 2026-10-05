@@ -1,6 +1,6 @@
 local _, ns = ...
 
--- classic1x is the confirmed Classic Era armory. It is UNCONFIRMED for 1.60: worldofwarcraft.blizzard.com has no WoW Forever route yet, so Forever links reuse it until launch shows the real one. See MEMORY.md before changing it.
+-- classic1x is the confirmed Classic Era armory. It is UNCONFIRMED for 1.60: worldofwarcraft.blizzard.com has no WoW Forever route yet, so Forever links reuse it until launch shows the real one.
 local ARMORY_URL = "https://worldofwarcraft.blizzard.com/%s/classic1x/%s/armory/character/%s/%s"
 
 local LOCALE_SLUGS = {
